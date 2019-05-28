@@ -21,7 +21,7 @@ except ImportError:
     from distutils.core import setup
 
 config = {
-    'name': 'ali_speech',
+    'name': 'alibabacloud-nls-python-sdk',
     'version': '2.0.0',
     'description': 'ali_speech python sdk',
     'author': 'Alibaba Cloud NLS Team',
