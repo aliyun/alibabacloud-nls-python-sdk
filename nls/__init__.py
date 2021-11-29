@@ -1,3 +1,6 @@
+"""
+__init__.py
+
 Copyright 1999-present Alibaba Group Holding Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,3 +14,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+"""
+
+from ._logging import *
+from ._speech_recognizer import *
+from ._speech_transcriber import *
+from ._speech_synthesizer import *
+from ._common_proto import *
+from ._util import *
+
+__version__ = "0.0.1"
