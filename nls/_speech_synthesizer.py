@@ -24,6 +24,7 @@ import threading
 
 from nls._core import NlsCore
 from . import _logging
+from . import _util
 
 __SPEECH_SYNTHESIZER_NAMESPACE__ = "SpeechSynthesizer"
 
@@ -272,7 +273,8 @@ class NlsSpeechSynthesizer:
 
         __msg = {
             "header": __header,
-            "payload": __payload
+            "payload": __payload,
+            "context": _util.GetDefaultContext()    
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:

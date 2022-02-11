@@ -20,7 +20,20 @@ limitations under the License.
 
 from struct import *
 
-__all__=["wav2pcm"]
+__all__=["wav2pcm", "GetDefaultContext"]
+
+def GetDefaultContext():
+    """
+    Return Default Context Object
+    """
+    return {
+        "sdk": {
+            "name": "nls-python-sdk",
+            "version": "0.0.1",
+            "language": "python"
+        }
+    }
+
 
 def wav2pcm(wavfile, pcmfile):
     """

@@ -23,6 +23,7 @@ import threading
 
 from nls._core import NlsCore
 from . import _logging
+from . import _util
 
 __URL__ = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
 __all__ = ["NlsCommonProto"]
@@ -201,7 +202,7 @@ class NlsCommonProto:
         __msg = {
             "header": __header,
             "payload": payload,
-            "context": context
+            "context": _util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         return self.__nls.start(__jmsg, ping_interval, ping_timeout)
@@ -240,7 +241,7 @@ class NlsCommonProto:
         __msg = {
             "header": __header,
             "payload": payload,
-            "context": context
+            "context": _util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         try:

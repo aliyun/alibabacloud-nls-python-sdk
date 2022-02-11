@@ -23,6 +23,7 @@ import threading
 
 from nls._core import NlsCore
 from . import _logging
+from . import _util
 
 __SPEECH_TRANSCRIBER_NAMESPACE__ = "SpeechTranscriber"
 
@@ -280,7 +281,8 @@ class NlsSpeechTranscriber:
 
         __msg = {
             "header": __header,
-            "payload": __payload
+            "payload": __payload,
+            "context": _util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
@@ -314,7 +316,8 @@ class NlsSpeechTranscriber:
             "appkey": self.__appkey
         }
         __msg = {
-            "header": __header
+            "header": __header,
+            "context": _util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
@@ -350,7 +353,8 @@ class NlsSpeechTranscriber:
         }
         __msg = {
             "header": __header,
-            "payload": ex
+            "payload": ex,
+            "context": _util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
