@@ -24,7 +24,7 @@ with open("README.md", "r") as f:
 requires = [
     "oss2",
     "aliyun-python-sdk-core==2.13.3",
-    "matplotlib==3.3.4"
+    "matplotlib==3.5.2"
 ]
 
 setup_args = {
