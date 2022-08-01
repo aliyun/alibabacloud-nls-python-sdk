@@ -79,7 +79,7 @@
 | sample_rate                       | int  | 识别音频采样率，默认16000                                    |
 | ch                                | int  | 音频通道数，默认为1，不需要提供                              |
 | enable_intermediate_result        | bool | 是否返回中间结果，默认False                                  |
-| enable_punctutation_prediction    | bool | 是否进行识别结果标点预测，默认False                          |
+| enable_punctuation_prediction    | bool | 是否进行识别结果标点预测，默认False                          |
 | enable_inverse_text_normalization | bool | 是否进行ITN，默认False                                       |
 | timeout                           | int  | 阻塞超时，默认10秒                                           |
 | ping_interval                     | int  | ping包发送间隔，默认8，不需要可以设置为0或None               |
@@ -260,7 +260,7 @@ multiruntest(1)
 | sample_rate                       | int  | 识别音频采样率，默认16000                                    |
 | ch                                | int  | 音频通道数，默认为1，不需要提供                              |
 | enable_intermediate_result        | bool | 是否返回中间结果，默认False                                  |
-| enable_punctutation_prediction    | bool | 是否进行识别结果标点预测，默认False                          |
+| enable_punctuation_prediction    | bool | 是否进行识别结果标点预测，默认False                          |
 | enable_inverse_text_normalization | bool | 是否进行ITN，默认False                                       |
 | timeout                           | int  | 阻塞超时，默认10秒                                           |
 | ping_interval                     | int  | ping包发送间隔，默认8，不需要可以设置为0或None               |
@@ -399,7 +399,7 @@ class TestSt:
             print("{}: session start".format(self.__id))
             r = sr.start(aformat="pcm",
                     enable_intermediate_result=True,
-                    enable_punctutation_prediction=True,
+                    enable_punctuation_prediction=True,
                     enable_inverse_text_normalization=True)
 
             self.__slices = zip(*(iter(self.__data),) * 640)

@@ -66,7 +66,7 @@ class TestSt:
             print("{}: session start".format(self.__id))
             r = sr.start(aformat="pcm",
                     enable_intermediate_result=True,
-                    enable_punctutation_prediction=True,
+                    enable_punctuation_prediction=True,
                     enable_inverse_text_normalization=True)
 
             self.__slices = zip(*(iter(self.__data),) * 640)

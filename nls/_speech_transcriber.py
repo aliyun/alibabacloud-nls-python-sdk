@@ -212,7 +212,7 @@ class NlsSpeechTranscriber:
 
     def start(self, aformat="pcm", sample_rate=16000, ch=1,
               enable_intermediate_result=False,
-              enable_punctutation_prediction=False,
+              enable_punctuation_prediction=False,
               enable_inverse_text_normalization=False,
               timeout=10,
               ping_interval=8,
@@ -231,8 +231,8 @@ class NlsSpeechTranscriber:
             audio channels, only support mono which is 1
         enable_intermediate_result: bool
             whether enable return intermediate recognition result, default is False
-        enable_punctutation_prediction: bool
-            whether enable punctutation prediction, default is False
+        enable_punctuation_prediction: bool
+            whether enable punctuation prediction, default is False
         enable_inverse_text_normalization: bool
             whether enable ITN, default is False
         timeout: int
@@ -272,7 +272,7 @@ class NlsSpeechTranscriber:
             "format": aformat,
             "sample_rate": sample_rate,
             "enable_intermediate_result": enable_intermediate_result,
-            "enable_punctuation_prediction": enable_punctutation_prediction,
+            "enable_punctuation_prediction": enable_punctuation_prediction,
             "enable_inverse_text_normalization": enable_inverse_text_normalization
         }
 
