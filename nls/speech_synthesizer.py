@@ -1,54 +1,44 @@
-"""
-_speech_synthesizer.py
-
-Copyright 1999-present Alibaba Group Holding Ltd.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import logging
+from re import I
 import uuid
 import json
 import threading
 
-from nls._core import NlsCore
-from . import _logging
-from . import _util
+from nls.core import NlsCore
+from . import logging
+from . import util
+from .exception import (StartTimeoutException,
+                        CompleteTimeoutException,
+                        InvalidParameter)
 
-__SPEECH_SYNTHESIZER_NAMESPACE__ = "SpeechSynthesizer"
+__SPEECH_SYNTHESIZER_NAMESPACE__ = 'SpeechSynthesizer'
+__SPEECH_LONG_SYNTHESIZER_NAMESPACE__ = 'SpeechLongSynthesizer'
 
 __SPEECH_SYNTHESIZER_REQUEST_CMD__ = {
-    "start": "StartSynthesis"
+    'start': 'StartSynthesis'
 }
 
-__URL__ = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
+__URL__ = 'wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1'
 
-__all__ = ["NlsSpeechSynthesizer"]
+__all__ = ['NlsSpeechSynthesizer']
 
 
 class NlsSpeechSynthesizer:
     """
     Api for text-to-speech 
-
     """
-    def __init__(self, url=__URL__,
-                 akid=None, aksecret=None,
-                 token=None, appkey=None,
+    def __init__(self,
+                 url=__URL__,
+                 token=None,
+                 appkey=None,
+                 long_tts=False,
                  on_metainfo=None,
                  on_data=None,
                  on_completed=None,
-                 on_error=None, on_close=None,
+                 on_error=None, 
+                 on_close=None,
                  callback_args=[]):
         """
         NlsSpeechSynthesizer initialization
@@ -59,14 +49,11 @@ class NlsSpeechSynthesizer:
             websocket url.
         akid: str
             access id from aliyun. if you provide a token, ignore this argument.
-        aksecret: str
-            access secret key from aliyun. if you provide a token, ignore this
-            argument.
-        token: str
-            access token. if you do not have a token, provide access id and key
-            secret from your aliyun account.
         appkey: str
             appkey from aliyun
+        long_tts: bool
+            whether using long-text synthesis support, default is False. long-text synthesis
+            can support longer text but more expensive.
         on_metainfo: function
             Callback object which is called when recognition started.
             on_start has two arguments.
@@ -96,18 +83,18 @@ class NlsSpeechSynthesizer:
         callback_args: list
             callback_args will return in callbacks above for *args.
         """
-
+        if not token or not appkey:
+            raise InvalidParameter('Must provide token and appkey')
         self.__response_handler__ = {
-            "MetaInfo": self.__metainfo,
-            "SynthesisCompleted": self.__synthesis_completed,
-            "TaskFailed": self.__task_failed
+            'MetaInfo': self.__metainfo,
+            'SynthesisCompleted': self.__synthesis_completed,
+            'TaskFailed': self.__task_failed
         }
         self.__callback_args = callback_args
         self.__url = url
         self.__appkey = appkey
-        self.__akid = akid
-        self.__aksecret = aksecret
         self.__token = token
+        self.__long_tts = long_tts
         self.__start_cond = threading.Condition()
         self.__start_flag = False
         self.__on_metainfo = on_metainfo
@@ -116,7 +103,7 @@ class NlsSpeechSynthesizer:
         self.__on_error = on_error
         self.__on_close = on_close
         self.__allow_aformat = (
-            "pcm", "wav", "mp3"
+            'pcm', 'wav', 'mp3'
                 )
         self.__allow_sample_rate = (
             8000, 11025, 16000, 22050,
@@ -124,40 +111,40 @@ class NlsSpeechSynthesizer:
                 )
 
     def __handle_message(self, message):
-        _logging.debug("__handle_message")
+        logging.debug('__handle_message')
         try:
             __result = json.loads(message)
-            if __result["header"]["name"] in self.__response_handler__:
-                __handler = self.__response_handler__[__result["header"]["name"]]
+            if __result['header']['name'] in self.__response_handler__:
+                __handler = self.__response_handler__[__result['header']['name']]
                 __handler(message)
             else:
-                _logging.error("cannot handle cmd{}".format(
-                    __result["header"]["name"]))
+                logging.error('cannot handle cmd{}'.format(
+                    __result['header']['name']))
                 return
         except json.JSONDecodeError:
-            _logging.error("cannot parse message:{}".format(message))
+            logging.error('cannot parse message:{}'.format(message))
             return
 
     def __syn_core_on_open(self):
-        _logging.debug("__syn_core_on_open")
+        logging.debug('__syn_core_on_open')
         with self.__start_cond:
             self.__start_flag = True
             self.__start_cond.notify()
 
     def __syn_core_on_data(self, data, opcode, flag):
-        _logging.debug("__syn_core_on_data")
+        logging.debug('__syn_core_on_data')
         if self.__on_data:
             self.__on_data(data, *self.__callback_args)
 
     def __syn_core_on_msg(self, msg, *args):
-        _logging.debug("__syn_core_on_msg:msg={} args={}".format(msg, args))
+        logging.debug('__syn_core_on_msg:msg={} args={}'.format(msg, args))
         self.__handle_message(msg)
 
     def __syn_core_on_error(self, msg, *args):
-        _logging.debug("__sr_core_on_error:msg={} args={}".format(msg, args))
+        logging.debug('__sr_core_on_error:msg={} args={}'.format(msg, args))
 
     def __syn_core_on_close(self):
-        _logging.debug("__sr_core_on_close")
+        logging.debug('__sr_core_on_close')
         if self.__on_close:
             self.__on_close(*self.__callback_args)
         with self.__start_cond:
@@ -165,14 +152,14 @@ class NlsSpeechSynthesizer:
             self.__start_cond.notify()
 
     def __metainfo(self, message):
-        _logging.debug("__metainfo")
+        logging.debug('__metainfo')
         if self.__on_metainfo:
             self.__on_metainfo(message, *self.__callback_args)
 
     def __synthesis_completed(self, message):
-        _logging.debug("__synthesis_completed")
+        logging.debug('__synthesis_completed')
         self.__nls.shutdown()
-        _logging.debug("__synthesis_completed shutdown done")
+        logging.debug('__synthesis_completed shutdown done')
         if self.__on_completed:
             self.__on_completed(message, *self.__callback_args)
         with self.__start_cond:
@@ -180,20 +167,25 @@ class NlsSpeechSynthesizer:
             self.__start_cond.notify()
 
     def __task_failed(self, message):
-        _logging.debug("__task_failed")
+        logging.debug('__task_failed')
         with self.__start_cond:
             self.__start_flag = False
             self.__start_cond.notify()
         if self.__on_error:
             self.__on_error(message, *self.__callback_args)
 
-    def start(self, text="", voice="xiaoyun",
-              aformat="pcm", sample_rate=16000,
-              volume=50, speech_rate=0, pitch_rate=0,
+    def start(self,
+              text=None,
+              voice='xiaoyun',
+              aformat='pcm',
+              sample_rate=16000,
+              volume=50,
+              speech_rate=0,
+              pitch_rate=0,
               wait_complete=True,
               start_timeout=10,
               completed_timeout=60,
-              ex={}):
+              ex:dict=None):
         """
         Synthesis start 
 
@@ -204,7 +196,7 @@ class NlsSpeechSynthesizer:
         voice: str
             voice for text-to-speech, default is xiaoyun
         aformat: str
-            audio binary format, support: "pcm", "wav", "mp3", default is "pcm"
+            audio binary format, support: 'pcm', 'wav', 'mp3', default is 'pcm'
         sample_rate: int
             audio sample rate, default is 16000, support:8000, 11025, 16000, 22050,
             24000, 32000, 44100, 48000
@@ -221,11 +213,13 @@ class NlsSpeechSynthesizer:
         completed_timeout: int
             timeout for waiting synthesis completed from connection established
         ex: dict
-            dict which will merge into "payload" field in request
+            dict which will merge into 'payload' field in request
         """
+        if text is None:
+            raise InvalidParameter('Text cannot be None')
+        
         self.__nls = NlsCore(
-            url=self.__url, akid=self.__akid,
-            aksecret=self.__aksecret,
+            url=self.__url,
             token=self.__token,
             on_open=self.__syn_core_on_open,
             on_message=self.__syn_core_on_msg,
@@ -235,75 +229,57 @@ class NlsSpeechSynthesizer:
             callback_args=[])
 
         if aformat not in self.__allow_aformat:
-            raise ValueError("format {} not support".format(aformat))
+            raise InvalidParameter('format {} not support'.format(aformat))
         if sample_rate not in self.__allow_sample_rate:
-            raise ValueError("samplerate {} not support".format(sample_rate))
-        
+            raise InvalidParameter('samplerate {} not support'.format(sample_rate))
         if volume < 0 or volume > 100:
-            raise ValueError("volume {} not support".format(volume))
-        
+            raise InvalidParameter('volume {} not support'.format(volume))
         if speech_rate < -500 or speech_rate > 500:
-            raise ValueError("speech_rate {} not support".format(speech_rate))
-        
+            raise InvalidParameter('speech_rate {} not support'.format(speech_rate))
         if pitch_rate < -500 or pitch_rate > 500:
-            raise ValueError("pitch rate {} not support".format(pitch_rate))
+            raise InvalidParameter('pitch rate {} not support'.format(pitch_rate))
 
         __id4 = uuid.uuid4().hex
         self.__task_id = uuid.uuid4().hex
-
+        __namespace = __SPEECH_SYNTHESIZER_NAMESPACE__
+        if self.__long_tts:
+            __namespace = __SPEECH_LONG_SYNTHESIZER_NAMESPACE__
         __header = {
-            "message_id": __id4,
-            "task_id": self.__task_id,
-            "namespace": __SPEECH_SYNTHESIZER_NAMESPACE__,
-            "name": __SPEECH_SYNTHESIZER_REQUEST_CMD__["start"],
-            "appkey": self.__appkey
+            'message_id': __id4,
+            'task_id': self.__task_id,
+            'namespace': __namespace,
+            'name': __SPEECH_SYNTHESIZER_REQUEST_CMD__['start'],
+            'appkey': self.__appkey
         }
         __payload = {
-            "text": text,
-            "voice": voice,
-            "format": aformat,
-            "sample_rate": sample_rate,
-            "volume": volume,
-            "speech_rate": speech_rate,
-            "pitch_rate": pitch_rate
+            'text': text,
+            'voice': voice,
+            'format': aformat,
+            'sample_rate': sample_rate,
+            'volume': volume,
+            'speech_rate': speech_rate,
+            'pitch_rate': pitch_rate
         }
-
-        for key in ex:
-            __payload[key] = ex[key]
-
+        if ex:
+            __payload.update(ex)
         __msg = {
-            "header": __header,
-            "payload": __payload,
-            "context": _util.GetDefaultContext()    
+            'header': __header,
+            'payload': __payload,
+            'context': util.GetDefaultContext()    
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
             if self.__start_flag:
-                _logging.debug("already start...")
-                return False
-            if self.__nls.start(__jmsg, ping_interval=0, ping_timeout=None):
-                if self.__start_flag == False:
-                    if not self.__start_cond.wait(start_timeout):
-                        _logging.debug("syn start timeout")
-                        return False
-                    if not wait_complete:
-                        _logging.debug("do not wait completed")
-                        return self.__start_flag == True
-                    if not self.__start_flag:
-                        _logging.debug("started but flag not true")
-                        return False
-            else:
-                _logging.debug("nls core start failed")
-                return False
-            if self.__start_flag:
+                logging.debug('already start...')
+                return
+            self.__nls.start(__jmsg, ping_interval=0, ping_timeout=None)
+            if self.__start_flag == False:
+                if not self.__start_cond.wait(start_timeout):
+                    logging.debug('syn start timeout')
+                    raise StartTimeoutException(f'Waiting Start over {start_timeout}s')
+            if self.__start_flag and wait_complete:
                 if not self.__start_cond.wait(completed_timeout):
-                    _logging.debug("wait completed timeout")
-                    return False
-                else:
-                    return self.__start_flag == False
-            else:
-                _logging.debug("wait completed but start flag is false")
-                return True
+                    raise CompleteTimeoutException(f'Waiting Complete over {completed_timeout}s')
 
     def shutdown(self):
         """

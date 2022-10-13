@@ -3,11 +3,7 @@ import threading
 import sys
 
 import nls
-
-URL="wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
-AKID="Your AKID"
-AKKEY="Your AKSECRET"
-APPKEY="Your APPKEY"
+from tests.test_utils import (TEST_ACCESS_TOKEN, TEST_ACCESS_APPKEY)
 
 
 TEXT='大壮正想去摘取花瓣，谁知阿丽和阿强突然内讧，阿丽拿去手枪向树干边的阿强射击，两声枪响，阿强直接倒入水中'
@@ -49,10 +45,9 @@ class TestTts:
     def __test_run(self):
         print("thread:{} start..".format(self.__id))
         tts = nls.NlsSpeechSynthesizer(
-                    url=URL,
-                    akid=AKID,
-                    aksecret=AKKEY,
-                    appkey=APPKEY,
+                    token=TEST_ACCESS_TOKEN,
+                    appkey=TEST_ACCESS_APPKEY,
+                    long_tts=True,
                     on_metainfo=self.test_on_metainfo,
                     on_data=self.test_on_data,
                     on_completed=self.test_on_completed,
@@ -63,7 +58,7 @@ class TestTts:
 
         while True:
             print("{}: session start".format(self.__id))
-            r = tts.start(self.__text, voice="ailun")
+            r = tts.start(self.__text, voice="ailun", ex={'enable_subtitle':True})
             print("{}: tts done with result:{}".format(self.__id, r))
             time.sleep(5)
 

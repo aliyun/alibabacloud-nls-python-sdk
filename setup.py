@@ -23,12 +23,12 @@ with open("README.md", "r") as f:
 
 requires = [
     "oss2",
-    "aliyun-python-sdk-core==2.13.3",
-    "matplotlib==3.3.4"
+    "aliyun-python-sdk-core>=2.13.3",
+    "matplotlib>=3.3.4"
 ]
 
 setup_args = {
-    'version': "0.0.2",
+    'version': "1.0.0",
     'author': "jiaqi.sjq",
     'author_email': "jiaqi.sjq@alibaba-inc.com",
     'description': "python sdk for nls",

@@ -3,12 +3,7 @@ import threading
 import sys
 
 import nls
-
-
-URL="wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
-AKID="Your AKID"
-AKKEY="Your AKSECRET"
-APPKEY="Your APPKEY"
+from tests.test_utils import (TEST_ACCESS_TOKEN, TEST_ACCESS_APPKEY)
 
 class TestSr:
     def __init__(self, tid, test_file):
@@ -17,7 +12,7 @@ class TestSr:
         self.__test_file = test_file
    
     def loadfile(self, filename):
-        with open(filename, "rb") as f:
+        with open(filename, 'rb') as f:
             self.__data = f.read()
     
     def start(self):
@@ -25,29 +20,27 @@ class TestSr:
         self.__th.start()
 
     def test_on_start(self, message, *args):
-        print("test_on_start:{}".format(message))
+        print('test_on_start:{}'.format(message))
 
     def test_on_error(self, message, *args):
-        print("on_error args=>{}".format(args))
+        print('on_error args=>{}'.format(args))
 
     def test_on_close(self, *args):
-        print("on_close: args=>{}".format(args))
+        print('on_close: args=>{}'.format(args))
 
     def test_on_result_chg(self, message, *args):
-        print("test_on_chg:{}".format(message))
+        print('test_on_chg:{}'.format(message))
 
     def test_on_completed(self, message, *args):
-        print("on_completed:args=>{} message=>{}".format(args, message))
+        print('on_completed:args=>{} message=>{}'.format(args, message))
 
 
     def __test_run(self):
-        print("thread:{} start..".format(self.__id))
+        print('thread:{} start..'.format(self.__id))
         
         sr = nls.NlsSpeechRecognizer(
-                    url=URL,
-                    akid=AKID,
-                    aksecret=AKKEY,
-                    appkey=APPKEY,
+                    token=TEST_ACCESS_TOKEN,
+                    appkey=TEST_ACCESS_APPKEY,
                     on_start=self.test_on_start,
                     on_result_changed=self.test_on_result_chg,
                     on_completed=self.test_on_completed,
@@ -56,8 +49,8 @@ class TestSr:
                     callback_args=[self.__id]
                 )
         while True:
-            print("{}: session start".format(self.__id))
-            r = sr.start(aformat="pcm", ex={"hello":123})
+            print('{}: session start'.format(self.__id))
+            r = sr.start(ex={'format':'pcm', 'hello':123})
            
             self.__slices = zip(*(iter(self.__data),) * 640)
             for i in self.__slices:
@@ -65,13 +58,13 @@ class TestSr:
                 time.sleep(0.01)
 
             r = sr.stop()
-            print("{}: sr stopped:{}".format(self.__id, r))
+            print('{}: sr stopped:{}'.format(self.__id, r))
             time.sleep(5)
 
 def multiruntest(num=500):
     for i in range(0, num):
-        name = "thread" + str(i)
-        t = TestSr(name, "tests/test1.pcm")
+        name = 'thread' + str(i)
+        t = TestSr(name, 'tests/test1.pcm')
         t.start()
 
 nls.enableTrace(True)
