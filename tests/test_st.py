@@ -3,12 +3,7 @@ import threading
 import sys
 
 import nls
-
-
-URL="wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
-AKID="Your AKID"
-AKKEY="Your AKSECRET"
-APPKEY="Your APPKEY"
+from tests.test_utils import (TEST_ACCESS_TOKEN, TEST_ACCESS_APPKEY)
 
 class TestSt:
     def __init__(self, tid, test_file):
@@ -49,10 +44,8 @@ class TestSt:
     def __test_run(self):
         print("thread:{} start..".format(self.__id))
         sr = nls.NlsSpeechTranscriber(
-                    url=URL,
-                    akid=AKID,
-                    aksecret=AKKEY,
-                    appkey=APPKEY,
+                    token=TEST_ACCESS_TOKEN,
+                    appkey=TEST_ACCESS_APPKEY,
                     on_sentence_begin=self.test_on_sentence_begin,
                     on_sentence_end=self.test_on_sentence_end,
                     on_start=self.test_on_start,

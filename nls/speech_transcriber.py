@@ -1,70 +1,54 @@
-"""
-_speech_transcriber.py
-
-Copyright 1999-present Alibaba Group Holding Ltd.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import logging
 import uuid
 import json
 import threading
 
-from nls._core import NlsCore
-from . import _logging
-from . import _util
+from nls.core import NlsCore
+from . import logging
+from . import util
+from nls.exception import (StartTimeoutException,
+                        StopTimeoutException,
+                        NotStartException,
+                        InvalidParameter)
 
-__SPEECH_TRANSCRIBER_NAMESPACE__ = "SpeechTranscriber"
+__SPEECH_TRANSCRIBER_NAMESPACE__ = 'SpeechTranscriber'
 
 __SPEECH_TRANSCRIBER_REQUEST_CMD__ = {
-    "start": "StartTranscription",
-    "stop": "StopTranscription",
-    "control": "ControlTranscriber"
+    'start': 'StartTranscription',
+    'stop': 'StopTranscription',
+    'control': 'ControlTranscriber'
 }
 
-__URL__ = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
-__all__ = ["NlsSpeechTranscriber"]
+__URL__ = 'wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1'
+__all__ = ['NlsSpeechTranscriber']
 
 
 class NlsSpeechTranscriber:
     """
     Api for realtime speech transcription
-
     """
 
-    def __init__(self, url=__URL__,
-                 akid=None, aksecret=None,
-                 token=None, appkey=None,
+    def __init__(self, 
+                 url=__URL__,
+                 token=None,
+                 appkey=None,
                  on_start=None,
                  on_sentence_begin=None,
                  on_sentence_end=None,
                  on_result_changed=None,
                  on_completed=None,
-                 on_error=None, on_close=None,
+                 on_error=None,
+                 on_close=None,
                  callback_args=[]):
-        """
+        '''
         NlsSpeechTranscriber initialization
 
         Parameters:
         -----------
         url: str
             websocket url.
-        akid: str
-            access id from aliyun. if you provide a token, ignore this argument.
-        aksecret: str
-            access secret key from aliyun. if you provide a token, ignore this
-            argument.
         token: str
             access token. if you do not have a token, provide access id and key
             secret from your aliyun account.
@@ -107,19 +91,19 @@ class NlsSpeechTranscriber:
             The 1st argument is *args which is callback_args.
         callback_args: list
             callback_args will return in callbacks above for *args.
-        """
+        '''
+        if not token or not appkey:
+            raise InvalidParameter('Must provide token and appkey')
         self.__response_handler__ = {
-            "SentenceBegin": self.__sentence_begin,
-            "SentenceEnd": self.__sentence_end,
-            "TranscriptionStarted": self.__transcription_started,
-            "TranscriptionResultChanged": self.__transcription_result_changed,
-            "TranscriptionCompleted": self.__transcription_completed,
-            "TaskFailed": self.__task_failed
+            'SentenceBegin': self.__sentence_begin,
+            'SentenceEnd': self.__sentence_end,
+            'TranscriptionStarted': self.__transcription_started,
+            'TranscriptionResultChanged': self.__transcription_result_changed,
+            'TranscriptionCompleted': self.__transcription_completed,
+            'TaskFailed': self.__task_failed
         }
         self.__callback_args = callback_args
         self.__url = url
-        self.__akid = akid
-        self.__aksecret = aksecret
         self.__appkey = appkey
         self.__token = token
         self.__start_cond = threading.Condition()
@@ -132,37 +116,37 @@ class NlsSpeechTranscriber:
         self.__on_error = on_error
         self.__on_close = on_close
         self.__allow_aformat = (
-            "pcm", "opus", "opu"
+            'pcm', 'opus', 'opu'
         )
 
     def __handle_message(self, message):
-        _logging.debug("__handle_message")
+        logging.debug('__handle_message')
         try:
             __result = json.loads(message)
-            if __result["header"]["name"] in self.__response_handler__:
+            if __result['header']['name'] in self.__response_handler__:
                 __handler = self.__response_handler__[
-                    __result["header"]["name"]]
+                    __result['header']['name']]
                 __handler(message)
             else:
-                _logging.error("cannot handle cmd{}".format(
-                    __result["header"]["name"]))
+                logging.error('cannot handle cmd{}'.format(
+                    __result['header']['name']))
                 return
         except json.JSONDecodeError:
-            _logging.error("cannot parse message:{}".format(message))
+            logging.error('cannot parse message:{}'.format(message))
             return
 
     def __tr_core_on_open(self):
-        _logging.debug("__tr_core_on_open")
+        logging.debug('__tr_core_on_open')
 
     def __tr_core_on_msg(self, msg, *args):
-        _logging.debug("__tr_core_on_msg:msg={} args={}".format(msg, args))
+        logging.debug('__tr_core_on_msg:msg={} args={}'.format(msg, args))
         self.__handle_message(msg)
 
     def __tr_core_on_error(self, msg, *args):
-        _logging.debug("__tr_core_on_error:msg={} args={}".format(msg, args))
+        logging.debug('__tr_core_on_error:msg={} args={}'.format(msg, args))
 
     def __tr_core_on_close(self):
-        _logging.debug("__tr_core_on_close")
+        logging.debug('__tr_core_on_close')
         if self.__on_close:
             self.__on_close(*self.__callback_args)
         with self.__start_cond:
@@ -170,17 +154,17 @@ class NlsSpeechTranscriber:
             self.__start_cond.notify()
 
     def __sentence_begin(self, message):
-        _logging.debug("__sentence_begin")
+        logging.debug('__sentence_begin')
         if self.__on_sentence_begin:
             self.__on_sentence_begin(message, *self.__callback_args)
 
     def __sentence_end(self, message):
-        _logging.debug("__sentence_end")
+        logging.debug('__sentence_end')
         if self.__on_sentence_end:
             self.__on_sentence_end(message, *self.__callback_args)
 
     def __transcription_started(self, message):
-        _logging.debug("__transcription_started")
+        logging.debug('__transcription_started')
         if self.__on_start:
             self.__on_start(message, *self.__callback_args)
         with self.__start_cond:
@@ -188,14 +172,14 @@ class NlsSpeechTranscriber:
             self.__start_cond.notify()
 
     def __transcription_result_changed(self, message):
-        _logging.debug("__transcription_result_changed")
+        logging.debug('__transcription_result_changed')
         if self.__on_result_changed:
             self.__on_result_changed(message, *self.__callback_args)
 
     def __transcription_completed(self, message):
-        _logging.debug("__transcription_completed")
+        logging.debug('__transcription_completed')
         self.__nls.shutdown()
-        _logging.debug("__transcription_completed shutdown done")
+        logging.debug('__transcription_completed shutdown done')
         if self.__on_completed:
             self.__on_completed(message, *self.__callback_args)
         with self.__start_cond:
@@ -203,28 +187,28 @@ class NlsSpeechTranscriber:
             self.__start_cond.notify()
 
     def __task_failed(self, message):
-        _logging.debug("__task_failed")
+        logging.debug('__task_failed')
         with self.__start_cond:
             self.__start_flag = False
             self.__start_cond.notify()
         if self.__on_error:
             self.__on_error(message, *self.__callback_args)
 
-    def start(self, aformat="pcm", sample_rate=16000, ch=1,
+    def start(self, aformat='pcm', sample_rate=16000, ch=1,
               enable_intermediate_result=False,
               enable_punctuation_prediction=False,
               enable_inverse_text_normalization=False,
               timeout=10,
               ping_interval=8,
               ping_timeout=None,
-              ex={}):
+              ex:dict=None):
         """
         Transcription start 
 
         Parameters:
         -----------
         aformat: str
-            audio binary format, support: "pcm", "opu", "opus", default is "pcm"
+            audio binary format, support: 'pcm', 'opu', 'opus', default is 'pcm'
         sample_rate: int
             audio sample rate, default is 16000
         ch: int
@@ -242,10 +226,10 @@ class NlsSpeechTranscriber:
         ping_timeout: int
             timeout after send ping and recive pong, set None for disable timeout check and default is None
         ex: dict
-            dict which will merge into "payload" field in request
+            dict which will merge into 'payload' field in request
         """
         self.__nls = NlsCore(
-            url=self.__url, akid=self.__akid, aksecret=self.__aksecret,
+            url=self.__url, 
             token=self.__token,
             on_open=self.__tr_core_on_open,
             on_message=self.__tr_core_on_msg,
@@ -254,49 +238,45 @@ class NlsSpeechTranscriber:
             callback_args=[])
 
         if ch != 1:
-            raise ValueError("not support channel: {}".format(ch))
+            raise ValueError('not support channel: {}'.format(ch))
         if aformat not in self.__allow_aformat:
-            raise ValueError("format {} not support".format(aformat))
+            raise ValueError('format {} not support'.format(aformat))
         __id4 = uuid.uuid4().hex
         self.__task_id = uuid.uuid4().hex
-        self.__audio_format = aformat
-
         __header = {
-            "message_id": __id4,
-            "task_id": self.__task_id,
-            "namespace": __SPEECH_TRANSCRIBER_NAMESPACE__,
-            "name": __SPEECH_TRANSCRIBER_REQUEST_CMD__["start"],
-            "appkey": self.__appkey
+            'message_id': __id4,
+            'task_id': self.__task_id,
+            'namespace': __SPEECH_TRANSCRIBER_NAMESPACE__,
+            'name': __SPEECH_TRANSCRIBER_REQUEST_CMD__['start'],
+            'appkey': self.__appkey
         }
         __payload = {
-            "format": aformat,
-            "sample_rate": sample_rate,
-            "enable_intermediate_result": enable_intermediate_result,
-            "enable_punctuation_prediction": enable_punctuation_prediction,
-            "enable_inverse_text_normalization": enable_inverse_text_normalization
+            'format': aformat,
+            'sample_rate': sample_rate,
+            'enable_intermediate_result': enable_intermediate_result,
+            'enable_punctuation_prediction': enable_punctuation_prediction,
+            'enable_inverse_text_normalization': enable_inverse_text_normalization
         }
 
-        for key in ex:
-            __payload[key] = ex[key]
+        if ex:
+            __payload.update(ex)
 
         __msg = {
-            "header": __header,
-            "payload": __payload,
-            "context": _util.GetDefaultContext()
+            'header': __header,
+            'payload': __payload,
+            'context': util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
             if self.__start_flag:
-                _logging.debug("already start...")
-                return False
-            if self.__nls.start(__jmsg, ping_interval, ping_timeout):
-                if self.__start_flag == False:
-                    if self.__start_cond.wait(timeout):
-                        return self.__start_flag == True
-                    else:
-                        return False
-            else:
-                return False
+                logging.debug('already start...')
+                return
+            self.__nls.start(__jmsg, ping_interval, ping_timeout)
+            if self.__start_flag == False:
+                if self.__start_cond.wait(timeout):
+                    return
+                else:
+                    raise StartTimeoutException(f'Waiting Start over {timeout}s')
 
     def stop(self, timeout=10):
         """
@@ -309,60 +289,61 @@ class NlsSpeechTranscriber:
         """
         __id4 = uuid.uuid4().hex
         __header = {
-            "message_id": __id4,
-            "task_id": self.__task_id,
-            "namespace": __SPEECH_TRANSCRIBER_NAMESPACE__,
-            "name": __SPEECH_TRANSCRIBER_REQUEST_CMD__["stop"],
-            "appkey": self.__appkey
+            'message_id': __id4,
+            'task_id': self.__task_id,
+            'namespace': __SPEECH_TRANSCRIBER_NAMESPACE__,
+            'name': __SPEECH_TRANSCRIBER_REQUEST_CMD__['stop'],
+            'appkey': self.__appkey
         }
         __msg = {
-            "header": __header,
-            "context": _util.GetDefaultContext()
+            'header': __header,
+            'context': util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
             if not self.__start_flag:
-                _logging.debug("not start yet...")
-                return False
+                logging.debug('not start yet...')
+                return
             self.__nls.send(__jmsg, False)
             if self.__start_flag == True:
-                _logging.debug("stop wait..")
+                logging.debug('stop wait..')
                 if self.__start_cond.wait(timeout):
-                    return self.__start_flag == False
+                    return
                 else:
-                    return False
-            else:
-                return True
+                    raise StopTimeoutException(f'Waiting stop over {timeout}s')
 
-    def ctrl(self, ex={}):
+    def ctrl(self, **kwargs):
         """
         Send control message to cloud
 
         Parameters:
         -----------
-        ex: dict
-            dict which will merge into "payload" field in request
+        kwargs: dict
+            dict which will merge into 'payload' field in request
         """
+        if not kwargs:
+            raise InvalidParameter('Empty kwargs not allowed!')
         __id4 = uuid.uuid4().hex
         __header = {
-            "message_id": __id4,
-            "task_id": self.__task_id,
-            "namespace": __SPEECH_TRANSCRIBER_NAMESPACE__,
-            "name": __SPEECH_TRANSCRIBER_REQUEST_CMD__["control"],
-            "appkey": self.__appkey
+            'message_id': __id4,
+            'task_id': self.__task_id,
+            'namespace': __SPEECH_TRANSCRIBER_NAMESPACE__,
+            'name': __SPEECH_TRANSCRIBER_REQUEST_CMD__['control'],
+            'appkey': self.__appkey
         }
+        payload = {}
+        payload.update(kwargs)
         __msg = {
-            "header": __header,
-            "payload": ex,
-            "context": _util.GetDefaultContext()
+            'header': __header,
+            'payload': payload,
+            'context': util.GetDefaultContext()
         }
         __jmsg = json.dumps(__msg)
         with self.__start_cond:
             if not self.__start_flag:
-                _logging.debug("not start yet...")
-                return False
+                logging.debug('not start yet...')
+                return
             self.__nls.send(__jmsg, False)
-            return True
 
     def shutdown(self):
         """
@@ -377,19 +358,17 @@ class NlsSpeechTranscriber:
         Parameters:
         -----------
         pcm_data: bytes
-            audio binary which format is "aformat" in start method 
+            audio binary which format is 'aformat' in start method 
         """
 
         __data = pcm_data
         with self.__start_cond:
             if not self.__start_flag:
-                return False
+                return
         try:
             self.__nls.send(__data, True)
         except ConnectionResetError as __e:
-            _logging.error("connection reset")
+            logging.error('connection reset')
             self.__start_flag = False
             self.__nls.shutdown()
             raise __e
-            return False
-        return True
