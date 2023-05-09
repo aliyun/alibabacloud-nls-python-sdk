@@ -116,7 +116,7 @@ class NlsSpeechTranscriber:
         self.__on_error = on_error
         self.__on_close = on_close
         self.__allow_aformat = (
-            'pcm', 'opus', 'opu'
+            'pcm', 'opus', 'opu', 'wav'
         )
 
     def __handle_message(self, message):
