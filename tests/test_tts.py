@@ -56,11 +56,9 @@ class TestTts:
                     callback_args=[self.__id]
                 )
 
-        while True:
-            print("{}: session start".format(self.__id))
-            r = tts.start(self.__text, voice="ailun", ex={'enable_subtitle':True})
-            print("{}: tts done with result:{}".format(self.__id, r))
-            time.sleep(5)
+        print("{}: session start".format(self.__id))
+        r = tts.start(self.__text, voice="ailun", ex={'enable_subtitle':True})
+        print("{}: tts done with result:{}".format(self.__id, r))
 
 def multiruntest(num=500):
     for i in range(0, num):
