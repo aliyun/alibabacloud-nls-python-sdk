@@ -37,7 +37,7 @@ class NlsStreamInputTtsRequest:
         self.appkey = appkey
         self.session_id = session_id
 
-    def getStartCMD(self, voice, format, sample_rate, volumn, speech_rate, pitch_rate):
+    def getStartCMD(self, voice, format, sample_rate, volumn, speech_rate, pitch_rate, ex):
         self.voice = voice
         self.format = format
         self.sample_rate = sample_rate
@@ -62,6 +62,8 @@ class NlsStreamInputTtsRequest:
                 "pitch_rate": self.pitch_rate,
             },
         }
+        if ex:
+            cmd["payload"].update(ex)        
         return json.dumps(cmd)
 
     def getSendCMD(self, text):
@@ -316,6 +318,7 @@ class NlsStreamInputTtsSynthesizer:
         volume=50,
         speech_rate=0,
         pitch_rate=0,
+        ex:dict=None,
     ):
         """
         Synthesis start
@@ -362,7 +365,7 @@ class NlsStreamInputTtsSynthesizer:
             raise InvalidParameter("pitch rate {} not support".format(pitch_rate))
 
         request = self.request.getStartCMD(
-            voice, aformat, sample_rate, volume, speech_rate, pitch_rate
+            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, ex
         )
         
         last_state = self.state.get()
