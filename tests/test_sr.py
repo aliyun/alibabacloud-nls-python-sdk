@@ -48,18 +48,17 @@ class TestSr:
                     on_close=self.test_on_close,
                     callback_args=[self.__id]
                 )
-        while True:
-            print('{}: session start'.format(self.__id))
-            r = sr.start(ex={'format':'pcm', 'hello':123})
-           
-            self.__slices = zip(*(iter(self.__data),) * 640)
-            for i in self.__slices:
-                sr.send_audio(bytes(i))
-                time.sleep(0.01)
+        print("{}: session start".format(self.__id))
+        r = sr.start(aformat="pcm", ex={"hello":123})
+            
+        self.__slices = zip(*(iter(self.__data),) * 640)
+        for i in self.__slices:
+            sr.send_audio(bytes(i))
+            time.sleep(0.01)
 
-            r = sr.stop()
-            print('{}: sr stopped:{}'.format(self.__id, r))
-            time.sleep(5)
+        r = sr.stop()
+        print("{}: sr stopped:{}".format(self.__id, r))
+        time.sleep(1)
 
 def multiruntest(num=500):
     for i in range(0, num):
