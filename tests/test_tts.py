@@ -47,7 +47,7 @@ class TestTts:
         tts = nls.NlsSpeechSynthesizer(
                     token=TEST_ACCESS_TOKEN,
                     appkey=TEST_ACCESS_APPKEY,
-                    long_tts=True,
+                    long_tts=False,
                     on_metainfo=self.test_on_metainfo,
                     on_data=self.test_on_data,
                     on_completed=self.test_on_completed,
