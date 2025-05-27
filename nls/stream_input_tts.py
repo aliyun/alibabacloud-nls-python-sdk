@@ -37,11 +37,11 @@ class NlsStreamInputTtsRequest:
         self.appkey = appkey
         self.session_id = session_id
 
-    def getStartCMD(self, voice, format, sample_rate, volumn, speech_rate, pitch_rate, ex):
+    def getStartCMD(self, voice, format, sample_rate, volume, speech_rate, pitch_rate, ex):
         self.voice = voice
         self.format = format
         self.sample_rate = sample_rate
-        self.volumn = volumn
+        self.volume = volume
         self.speech_rate = speech_rate
         self.pitch_rate = pitch_rate
         cmd = {
@@ -57,7 +57,7 @@ class NlsStreamInputTtsRequest:
                 "voice": self.voice,
                 "format": self.format,
                 "sample_rate": self.sample_rate,
-                "volumn": self.volumn,
+                "volume": self.volume,
                 "speech_rate": self.speech_rate,
                 "pitch_rate": self.pitch_rate,
             },
@@ -431,9 +431,65 @@ class NlsStreamInputTtsSynthesizer:
         self.state.set(NlsStreamInputTtsStatus.Completed)
         self.shutdown()
 
+
+    def startTts(
+        self,
+        text,
+        voice="longxiaochun",
+        aformat="pcm",
+        sample_rate=24000,
+        volume=50,
+        speech_rate=0,
+        pitch_rate=0,
+        ex:dict=None,
+    ):
+        """
+        Synthesis start
+
+        Parameters:
+        -----------
+        text: str
+            utf-8 text
+        voice: str
+            voice for text-to-speech, default is xiaoyun
+        aformat: str
+            audio binary format, support: 'pcm', 'wav', 'mp3', default is 'pcm'
+        sample_rate: int
+            audio sample rate, default is 24000, support:8000, 11025, 16000, 22050,
+            24000, 32000, 44100, 48000
+        volume: int
+            audio volume, from 0~100, default is 50
+        speech_rate: int
+            speech rate from -500~500, default is 0
+        pitch_rate: int
+            pitch for voice from -500~500, default is 0
+        ex: dict
+            dict which will merge into 'payload' field in request
+        """
+        if ex is None:
+            ex = {}
+        ex['enable_ssml'] = True
+        self.startStreamInputTts(
+            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, ex
+        )
+        self.sendStreamInputTts(text)
+
+    def waitForComplete(self):
+        """
+        Waiting for synthesis complete, use after startTts
+        """
+        self.stopStreamInputTts()
+
+
     def shutdown(self):
         """
         Shutdown connection immediately
         """
 
         self.__nls.shutdown()
+
+    def get_last_task_id(self):
+        if self.request:
+            return self.request.task_id
+        else:
+            return None
