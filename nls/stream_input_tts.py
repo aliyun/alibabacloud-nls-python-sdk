@@ -37,7 +37,7 @@ class NlsStreamInputTtsRequest:
         self.appkey = appkey
         self.session_id = session_id
 
-    def getStartCMD(self, voice, format, sample_rate, volume, speech_rate, pitch_rate, ex):
+    def getStartCMD(self, voice, format, sample_rate, volume, speech_rate, pitch_rate, bit_rate, ex):
         self.voice = voice
         self.format = format
         self.sample_rate = sample_rate
@@ -62,6 +62,8 @@ class NlsStreamInputTtsRequest:
                 "pitch_rate": self.pitch_rate,
             },
         }
+        if bit_rate:
+            cmd["payload"]["bit_rate"] = bit_rate
         if ex:
             cmd["payload"].update(ex)        
         return json.dumps(cmd)
@@ -216,7 +218,7 @@ class NlsStreamInputTtsSynthesizer:
         self.__on_completed = on_completed
         self.__on_error = on_error
         self.__on_close = on_close
-        self.__allow_aformat = ("pcm", "wav", "mp3")
+        self.__allow_aformat = ("pcm", "wav", "mp3", "opus")
         self.__allow_sample_rate = (
             8000,
             11025,
@@ -318,6 +320,7 @@ class NlsStreamInputTtsSynthesizer:
         volume=50,
         speech_rate=0,
         pitch_rate=0,
+        bit_rate=None,
         ex:dict=None,
     ):
         """
@@ -328,7 +331,7 @@ class NlsStreamInputTtsSynthesizer:
         voice: str
             voice for text-to-speech, default is xiaoyun
         aformat: str
-            audio binary format, support: 'pcm', 'wav', 'mp3', default is 'pcm'
+            audio binary format, support: 'pcm', 'wav', 'mp3', 'opus', default is 'pcm'
         sample_rate: int
             audio sample rate, default is 24000, support:8000, 11025, 16000, 22050,
             24000, 32000, 44100, 48000
@@ -338,6 +341,8 @@ class NlsStreamInputTtsSynthesizer:
             speech rate from -500~500, default is 0
         pitch_rate: int
             pitch for voice from -500~500, default is 0
+        bit_rate: int
+            bit rate for opus, default is None
         ex: dict
             dict which will merge into 'payload' field in request
         """
@@ -365,7 +370,7 @@ class NlsStreamInputTtsSynthesizer:
             raise InvalidParameter("pitch rate {} not support".format(pitch_rate))
 
         request = self.request.getStartCMD(
-            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, ex
+            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, bit_rate, ex
         )
         
         last_state = self.state.get()
