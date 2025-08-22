@@ -446,6 +446,7 @@ class NlsStreamInputTtsSynthesizer:
         volume=50,
         speech_rate=0,
         pitch_rate=0,
+        bit_rate=None,
         ex:dict=None,
     ):
         """
@@ -468,6 +469,8 @@ class NlsStreamInputTtsSynthesizer:
             speech rate from -500~500, default is 0
         pitch_rate: int
             pitch for voice from -500~500, default is 0
+        bit_rate: int
+            bit rate for opus, default is None
         ex: dict
             dict which will merge into 'payload' field in request
         """
@@ -475,7 +478,7 @@ class NlsStreamInputTtsSynthesizer:
             ex = {}
         ex['enable_ssml'] = True
         self.startStreamInputTts(
-            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, ex
+            voice, aformat, sample_rate, volume, speech_rate, pitch_rate, bit_rate, ex
         )
         self.sendStreamInputTts(text)
 
